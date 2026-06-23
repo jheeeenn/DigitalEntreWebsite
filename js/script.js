@@ -54,7 +54,7 @@ function setupMissingImageFallbacks() {
                 return;
             }
 
-            image.src = createPlaceholderImage(image.alt || "Cheesyboi");
+            image.src = createPlaceholderImage(image.alt || "Cream & Crumbs");
         });
     });
 }
@@ -67,7 +67,7 @@ function createPlaceholderImage(label) {
             <circle cx="610" cy="140" r="160" fill="#d8c5ad" opacity="0.65"/>
             <circle cx="185" cy="440" r="190" fill="#8f967d" opacity="0.18"/>
             <rect x="170" y="170" width="460" height="260" rx="44" fill="#fffaf3" opacity="0.9"/>
-            <text x="400" y="285" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="46" font-weight="700" fill="#4b3f35">Cheesyboi</text>
+            <text x="400" y="285" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="46" font-weight="700" fill="#4b3f35">Cream &amp; Crumbs</text>
             <text x="400" y="345" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="30" fill="#7a746d">${safeLabel}</text>
         </svg>
     `;

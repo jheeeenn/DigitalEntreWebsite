@@ -176,6 +176,84 @@ h3 {
     color: var(--white);
 }
 
+/* #To Be Remove after Business is Laucnhed */
+.prelaunch-banner {
+    background: rgba(200, 159, 114, 0.14);
+    border-bottom: 1px solid rgba(75, 63, 53, 0.08);
+    padding:
+        1rem
+        max(1.25rem, env(safe-area-inset-right))
+        1rem
+        max(1.25rem, env(safe-area-inset-left));
+}
+
+.prelaunch-banner.is-hidden {
+    display: none;
+}
+
+.prelaunch-content {
+    align-items: center;
+    background: rgba(255, 250, 243, 0.88);
+    border: 1px solid rgba(75, 63, 53, 0.08);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 28px rgba(75, 63, 53, 0.08);
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    margin: 0 auto;
+    max-width: 1180px;
+    padding: 1.1rem;
+}
+
+.prelaunch-content h2 {
+    font-family: var(--font-heading);
+    font-size: clamp(1.35rem, 3vw, 2rem);
+    letter-spacing: -0.025em;
+    margin-bottom: 0.4rem;
+}
+
+.prelaunch-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    justify-content: flex-end;
+}
+
+.banner-dismiss {
+    align-items: center;
+    background: rgba(75, 63, 53, 0.08);
+    border: 0;
+    border-radius: 50%;
+    color: var(--brown);
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 1.3rem;
+    font-weight: 800;
+    height: 2.5rem;
+    justify-content: center;
+    line-height: 1;
+    width: 2.5rem;
+}
+
+.banner-dismiss:hover {
+    background: rgba(75, 63, 53, 0.14);
+}
+
+.order-status-note {
+    background: rgba(200, 159, 114, 0.15);
+    border: 1px solid rgba(200, 159, 114, 0.26);
+    border-radius: 18px;
+    color: var(--brown);
+    margin-bottom: 1rem;
+    padding: 1rem 1.1rem;
+}
+
+.order-status-note strong {
+    color: var(--brown);
+}
+/* #To Be Remove after Business is Laucnhed */
+
 .hero,
 .page-hero,
 .section {
@@ -655,6 +733,36 @@ h3 {
 }
 
 @media (max-width: 720px) {
+    /* #To Be Remove after Business is Laucnhed */
+    .prelaunch-banner {
+        padding:
+            0.85rem
+            max(1rem, env(safe-area-inset-right))
+            0.85rem
+            max(1rem, env(safe-area-inset-left));
+    }
+
+    .prelaunch-content {
+        grid-template-columns: 1fr;
+        padding: 1rem 3.2rem 1rem 1rem;
+        position: relative;
+    }
+
+    .prelaunch-actions {
+        justify-content: stretch;
+    }
+
+    .prelaunch-actions .button {
+        width: 100%;
+    }
+
+    .banner-dismiss {
+        position: absolute;
+        right: 1rem;
+        top: 1rem;
+    }
+    /* #To Be Remove after Business is Laucnhed */
+
     .navbar {
         align-items: flex-start;
         flex-direction: column;

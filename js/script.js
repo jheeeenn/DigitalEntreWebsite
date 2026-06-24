@@ -2,7 +2,31 @@ document.addEventListener("DOMContentLoaded", function () {
     setActiveNavLink();
     setupFaqAccordion();
     setupMissingImageFallbacks();
+    setupPrelaunchBanner();
 });
+
+// #To Be Remove after Business is Laucnhed
+function setupPrelaunchBanner() {
+    const banner = document.getElementById("prelaunchBanner");
+    const dismissButton = document.querySelector(".banner-dismiss");
+
+    if (!banner || !dismissButton) {
+        return;
+    }
+
+    const isDismissed = localStorage.getItem("cheesieClubPrelaunchDismissed") === "true";
+
+    if (isDismissed) {
+        banner.classList.add("is-hidden");
+        return;
+    }
+
+    dismissButton.addEventListener("click", function () {
+        banner.classList.add("is-hidden");
+        localStorage.setItem("cheesieClubPrelaunchDismissed", "true");
+    });
+}
+// #To Be Remove after Business is Laucnhed
 
 function setActiveNavLink() {
     const currentPage = window.location.pathname.split("/").pop() || "index.html";

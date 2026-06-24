@@ -17,6 +17,7 @@
 }
 
 html {
+    background-color: var(--cream);
     scroll-behavior: smooth;
 }
 
@@ -31,6 +32,7 @@ body {
     background:
         radial-gradient(circle at top left, rgba(200, 159, 114, 0.16), transparent 34rem),
         linear-gradient(180deg, var(--cream), #f3eadc 58%, var(--cream));
+    background-color: var(--cream);
     color: var(--brown);
     font-family: var(--font-body);
     line-height: 1.6;
@@ -67,9 +69,10 @@ h3 {
     position: sticky;
     top: 0;
     z-index: 20;
-    background: rgba(248, 242, 232, 0.92);
+    background: rgba(248, 242, 232, 0.94);
     border-bottom: 1px solid rgba(75, 63, 53, 0.08);
     backdrop-filter: blur(16px);
+    padding-top: env(safe-area-inset-top);
 }
 
 .navbar {
@@ -79,7 +82,11 @@ h3 {
     justify-content: space-between;
     margin: 0 auto;
     max-width: 1180px;
-    padding: 0.85rem 1.25rem;
+    padding:
+        0.85rem
+        max(1.25rem, env(safe-area-inset-right))
+        0.85rem
+        max(1.25rem, env(safe-area-inset-left));
 }
 
 .brand {
@@ -174,7 +181,11 @@ h3 {
 .section {
     margin: 0 auto;
     max-width: 1180px;
-    padding: 4.5rem 1.25rem;
+    padding:
+        4.5rem
+        max(1.25rem, env(safe-area-inset-right))
+        4.5rem
+        max(1.25rem, env(safe-area-inset-left));
 }
 
 .hero {
@@ -614,7 +625,11 @@ h3 {
     justify-content: space-between;
     margin: 0 auto;
     max-width: 1180px;
-    padding: 2rem 1.25rem;
+    padding:
+        2rem
+        max(1.25rem, env(safe-area-inset-right))
+        max(2rem, env(safe-area-inset-bottom))
+        max(1.25rem, env(safe-area-inset-left));
 }
 
 .site-footer a {
@@ -644,7 +659,11 @@ h3 {
         align-items: flex-start;
         flex-direction: column;
         gap: 0.6rem;
-        padding: 0.7rem 0.9rem;
+        padding:
+            0.7rem
+            max(0.9rem, env(safe-area-inset-right))
+            0.7rem
+            max(0.9rem, env(safe-area-inset-left));
     }
 
     .brand {
@@ -682,7 +701,10 @@ h3 {
     .hero,
     .page-hero,
     .section {
-        padding: 2.25rem 1rem;
+        padding-bottom: 2.25rem;
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+        padding-top: 2.25rem;
     }
 
     .hero {
@@ -736,7 +758,10 @@ h3 {
     }
 
     .site-footer {
-        padding: 1.4rem 1rem;
+        padding-bottom: max(1.4rem, env(safe-area-inset-bottom));
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+        padding-top: 1.4rem;
     }
 }
 

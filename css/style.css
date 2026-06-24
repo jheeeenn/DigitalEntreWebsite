@@ -265,6 +265,7 @@ h3 {
 }
 
 .hero-visual {
+    align-items: center;
     aspect-ratio: 1 / 1;
     background:
         linear-gradient(145deg, rgba(255, 250, 243, 0.82), rgba(234, 220, 200, 0.82)),
@@ -272,33 +273,35 @@ h3 {
     border: 1px solid rgba(75, 63, 53, 0.08);
     border-radius: 36px;
     box-shadow: var(--shadow);
-    display: grid;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1rem, 2.4vw, 1.75rem);
+    justify-content: center;
     min-height: 20rem;
     overflow: hidden;
     padding: clamp(1.25rem, 3vw, 2.5rem);
-    place-items: center;
     position: relative;
 }
 
 .hero-visual > img {
     border-radius: 24px;
+    flex: 0 1 auto;
     margin: 0 auto;
-    max-height: 58%;
+    max-height: clamp(11rem, 40vw, 20rem);
     object-fit: contain;
     object-position: center;
-    width: min(72%, 23rem);
+    width: min(76%, 24rem);
 }
 
 .hero-card {
-    background: rgba(255, 250, 243, 0.88);
+    background: rgba(255, 250, 243, 0.9);
     border: 1px solid rgba(75, 63, 53, 0.1);
     border-radius: 20px;
-    bottom: 1.5rem;
     box-shadow: 0 14px 30px rgba(75, 63, 53, 0.12);
-    left: 1.5rem;
     padding: 1rem;
-    position: absolute;
-    right: 1.5rem;
+    position: static;
+    width: 100%;
+    z-index: 2;
 }
 
 .hero-card span,
@@ -704,13 +707,18 @@ h3 {
     .hero-visual {
         aspect-ratio: auto;
         border-radius: 26px;
-        min-height: 15rem;
-        padding: 1.2rem;
+        gap: 1rem;
+        min-height: auto;
+        padding: 1.25rem;
     }
 
     .hero-visual > img {
-        max-height: 10rem;
-        width: min(78%, 18rem);
+        max-height: 12rem;
+        width: min(82%, 18rem);
+    }
+
+    .hero-card {
+        width: 100%;
     }
 
     .menu-grid,
@@ -737,10 +745,6 @@ h3 {
         width: 100%;
     }
 
-    .hero-card {
-        left: 1rem;
-        right: 1rem;
-    }
 }
 
 @media (max-width: 390px) {

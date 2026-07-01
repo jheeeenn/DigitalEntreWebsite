@@ -176,7 +176,6 @@ h3 {
     color: var(--white);
 }
 
-/* #To Be Remove after Business is Laucnhed */
 .prelaunch-banner {
     background: rgba(200, 159, 114, 0.14);
     border-bottom: 1px solid rgba(75, 63, 53, 0.08);
@@ -252,7 +251,6 @@ h3 {
 .order-status-note strong {
     color: var(--brown);
 }
-/* #To Be Remove after Business is Laucnhed */
 
 .hero,
 .page-hero,
@@ -474,7 +472,6 @@ h3 {
     width: 100%;
 }
 
-.flavour-card div,
 .step-card,
 .info-card,
 .contact-card,
@@ -484,7 +481,6 @@ h3 {
 
 .flavour-card h3 {
     font-size: 1.25rem;
-    margin-bottom: 0.35rem;
 }
 
 .price {
@@ -493,6 +489,76 @@ h3 {
     font-size: 1.1rem;
     font-weight: 900;
     margin-top: 0.75rem;
+}
+
+.featured-menu-card {
+    transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.featured-menu-card:hover {
+    box-shadow: 0 18px 42px rgba(75, 63, 53, 0.13);
+    transform: translateY(-4px);
+}
+
+.flavour-card-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 1.25rem;
+}
+
+.flavour-tag {
+    align-self: flex-start;
+    background: rgba(143, 150, 125, 0.14);
+    border-radius: 999px;
+    color: var(--sage);
+    font-size: 0.78rem;
+    font-weight: 900;
+    padding: 0.35rem 0.65rem;
+}
+
+.flavour-card-footer {
+    align-items: center;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+    margin-top: auto;
+}
+
+.flavour-card-footer .price {
+    margin-top: 0;
+}
+
+.mini-order-link {
+    background: var(--brown);
+    border-radius: 999px;
+    color: var(--white);
+    font-size: 0.86rem;
+    font-weight: 800;
+    padding: 0.55rem 0.8rem;
+}
+
+.mini-order-link:hover {
+    background: var(--sage);
+}
+
+.menu-cta {
+    align-items: center;
+    background: rgba(255, 250, 243, 0.78);
+    border: 1px solid rgba(75, 63, 53, 0.08);
+    border-radius: var(--radius);
+    box-shadow: 0 14px 34px rgba(75, 63, 53, 0.08);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-top: 1.2rem;
+    padding: 1.25rem;
+}
+
+.menu-cta p {
+    max-width: 34rem;
 }
 
 .split-section {
@@ -733,7 +799,6 @@ h3 {
 }
 
 @media (max-width: 720px) {
-    /* #To Be Remove after Business is Laucnhed */
     .prelaunch-banner {
         padding:
             0.85rem
@@ -761,7 +826,6 @@ h3 {
         right: 1rem;
         top: 1rem;
     }
-    /* #To Be Remove after Business is Laucnhed */
 
     .navbar {
         align-items: flex-start;
@@ -848,6 +912,24 @@ h3 {
     }
 
     .hero-card {
+        width: 100%;
+    }
+
+    .flavour-card-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .mini-order-link {
+        text-align: center;
+    }
+
+    .menu-cta {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .menu-cta .button {
         width: 100%;
     }
 

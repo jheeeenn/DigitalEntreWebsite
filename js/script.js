@@ -31,6 +31,8 @@ function setupOrderCart() {
     const STORAGE_KEY = "cheesieClubOrderCartV1";
     const INSTAGRAM_PROFILE_URL = "https://www.instagram.com/cheesie_club/";
     const INSTAGRAM_DM_URL = "https://ig.me/m/cheesie_club";
+    const NORMAL_DELIVERY_FEE = 1;
+    const FREE_DELIVERY_PROMOTION_ACTIVE = true;
     const MENU_PRICES = {
         Original: 8.90,
         Oreo: 9.90,
@@ -49,6 +51,8 @@ function setupOrderCart() {
     const itemsContainer = document.getElementById("cartItems");
     const subtotalEl = document.getElementById("cartSubtotal");
     const deliveryFeeEl = document.getElementById("cartDeliveryFee");
+    const promotionRow = document.getElementById("cartPromotionRow");
+    const promotionDiscountEl = document.getElementById("cartPromotionDiscount");
     const totalEl = document.getElementById("cartTotal");
     const messagePreview = document.getElementById("orderMessagePreview");
     const copyButton = document.getElementById("copyOrderMessage");
@@ -57,8 +61,8 @@ function setupOrderCart() {
     const fulfilmentInputs = document.querySelectorAll('input[name="fulfilment"]');
 
     if (!floatingButton || !badge || !overlay || !drawer || !closeButton || !emptyState || !content ||
-        !itemsContainer || !subtotalEl || !deliveryFeeEl || !totalEl || !messagePreview ||
-        !copyButton || !copyOpenButton || !clearButton) {
+        !itemsContainer || !subtotalEl || !deliveryFeeEl || !promotionRow || !promotionDiscountEl ||
+        !totalEl || !messagePreview || !copyButton || !copyOpenButton || !clearButton) {
         return;
     }
 
@@ -87,7 +91,7 @@ function setupOrderCart() {
             saveCart();
             renderCart();
             flashAddedButton(button);
-            openDrawer();
+            pulseCartButton();
         });
     });
 
@@ -114,12 +118,19 @@ function setupOrderCart() {
         showTemporaryButtonText(copyButton, copied ? "Copied!" : "Copy failed", "Copy order message");
     });
 
-    copyOpenButton.addEventListener("click", async function () {
+    copyOpenButton.addEventListener("click", function () {
+        let copied = false;
+
+        try {
+            copied = copyTextImmediately(generateOrderMessage());
+        } catch (error) {
+            console.warn("Could not copy order message before opening Instagram", error);
+        }
+
         const instagramWindow = window.open(INSTAGRAM_DM_URL, "_blank", "noopener");
-        const copied = await copyText(generateOrderMessage());
 
         if (!instagramWindow) {
-            window.open(INSTAGRAM_PROFILE_URL, "_blank", "noopener");
+            window.location.href = INSTAGRAM_PROFILE_URL;
         }
 
         showTemporaryButtonText(copyOpenButton, copied ? "Copied!" : "Opened Instagram", "Copy & open Instagram");
@@ -220,17 +231,27 @@ function setupOrderCart() {
             return sum + item.price * item.qty;
         }, 0);
         let deliveryFee = 0;
+        let promotionDiscount = 0;
 
         if (state.fulfilment === "delivery" && itemCount > 0) {
-            deliveryFee = itemCount >= 2 ? 0 : 1;
+            deliveryFee = NORMAL_DELIVERY_FEE;
+
+            if (FREE_DELIVERY_PROMOTION_ACTIVE) {
+                promotionDiscount = deliveryFee;
+            } else if (itemCount >= 2) {
+                promotionDiscount = deliveryFee;
+            }
         }
+
+        const total = Math.max(0, subtotal + deliveryFee - promotionDiscount);
 
         return {
             items: items,
             itemCount: itemCount,
             subtotal: subtotal,
             deliveryFee: deliveryFee,
-            total: subtotal + deliveryFee
+            promotionDiscount: promotionDiscount,
+            total: total
         };
     }
 
@@ -273,9 +294,16 @@ function setupOrderCart() {
         }).join("");
 
         subtotalEl.textContent = formatRM(summary.subtotal);
-        deliveryFeeEl.textContent = state.fulfilment === "delivery" && summary.deliveryFee === 0 && summary.itemCount >= 2
-            ? "Free"
-            : formatRM(summary.deliveryFee);
+        deliveryFeeEl.textContent = formatRM(summary.deliveryFee);
+
+        if (summary.promotionDiscount > 0) {
+            promotionRow.hidden = false;
+            promotionDiscountEl.textContent = "-" + formatRM(summary.promotionDiscount);
+        } else {
+            promotionRow.hidden = true;
+            promotionDiscountEl.textContent = "-RM0.00";
+        }
+
         totalEl.textContent = formatRM(summary.total);
         messagePreview.value = generateOrderMessage();
     }
@@ -293,11 +321,11 @@ function setupOrderCart() {
         const arrangement = state.fulfilment === "delivery"
             ? "Delivery within selected Kampar area"
             : "Pickup in Kampar";
-        const deliveryLine = state.fulfilment === "delivery"
-            ? `Delivery fee: ${summary.deliveryFee === 0 ? "Free" : formatRM(summary.deliveryFee)}`
+        const feeLines = state.fulfilment === "delivery"
+            ? `Delivery fee: ${formatRM(summary.deliveryFee)}\nLaunch promotion: -${formatRM(summary.promotionDiscount)}`
             : "Delivery fee: RM0.00";
 
-        return `Hi Cheesie Club, I would like to order:\n${itemLines}\n\nPreferred arrangement: ${arrangement}\n${deliveryLine}\nEstimated total: ${formatRM(summary.total)}\n\nName:\nKampar area / pickup preference:\nPreferred date/time:\n\nPlease confirm availability and payment details. Thank you!`;
+        return `Hi Cheesie Club, I would like to order:\n${itemLines}\n\nPreferred arrangement: ${arrangement}\n${feeLines}\nEstimated total: ${formatRM(summary.total)}\n\nPlease confirm availability and payment details. Thank you!`;
     }
 
     function openDrawer() {
@@ -336,20 +364,24 @@ function setupOrderCart() {
         }
 
         try {
-            const textarea = document.createElement("textarea");
-            textarea.value = text;
-            textarea.style.position = "fixed";
-            textarea.style.opacity = "0";
-            document.body.appendChild(textarea);
-            textarea.focus();
-            textarea.select();
-            const copied = document.execCommand("copy");
-            textarea.remove();
-            return copied;
+            return copyTextImmediately(text);
         } catch (error) {
             console.warn("Could not copy order message", error);
             return false;
         }
+    }
+
+    function copyTextImmediately(text) {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const copied = document.execCommand("copy");
+        textarea.remove();
+        return copied;
     }
 
     function flashAddedButton(button) {
@@ -361,6 +393,16 @@ function setupOrderCart() {
             button.classList.remove("added");
             button.textContent = oldText;
         }, 1200);
+    }
+
+    function pulseCartButton() {
+        floatingButton.classList.remove("cart-bounce");
+        void floatingButton.offsetWidth;
+        floatingButton.classList.add("cart-bounce");
+
+        setTimeout(function () {
+            floatingButton.classList.remove("cart-bounce");
+        }, 650);
     }
 
     function showTemporaryButtonText(button, message, originalText) {

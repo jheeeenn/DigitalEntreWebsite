@@ -176,7 +176,7 @@ h3 {
     color: var(--white);
 }
 
-.prelaunch-banner {
+.order-banner {
     background: rgba(200, 159, 114, 0.14);
     border-bottom: 1px solid rgba(75, 63, 53, 0.08);
     padding:
@@ -186,11 +186,11 @@ h3 {
         max(1.25rem, env(safe-area-inset-left));
 }
 
-.prelaunch-banner.is-hidden {
+.order-banner.is-hidden {
     display: none;
 }
 
-.prelaunch-content {
+.order-banner-content {
     align-items: center;
     background: rgba(255, 250, 243, 0.88);
     border: 1px solid rgba(75, 63, 53, 0.08);
@@ -204,14 +204,14 @@ h3 {
     padding: 1.1rem;
 }
 
-.prelaunch-content h2 {
+.order-banner-content h2 {
     font-family: var(--font-heading);
     font-size: clamp(1.35rem, 3vw, 2rem);
     letter-spacing: -0.025em;
     margin-bottom: 0.4rem;
 }
 
-.prelaunch-actions {
+.order-banner-actions {
     align-items: center;
     display: flex;
     flex-wrap: wrap;
@@ -799,7 +799,7 @@ h3 {
 }
 
 @media (max-width: 720px) {
-    .prelaunch-banner {
+    .order-banner {
         padding:
             0.85rem
             max(1rem, env(safe-area-inset-right))
@@ -807,17 +807,17 @@ h3 {
             max(1rem, env(safe-area-inset-left));
     }
 
-    .prelaunch-content {
+    .order-banner-content {
         grid-template-columns: 1fr;
         padding: 1rem 3.2rem 1rem 1rem;
         position: relative;
     }
 
-    .prelaunch-actions {
+    .order-banner-actions {
         justify-content: stretch;
     }
 
-    .prelaunch-actions .button {
+    .order-banner-actions .button {
         width: 100%;
     }
 

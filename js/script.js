@@ -2,18 +2,18 @@ document.addEventListener("DOMContentLoaded", function () {
     setActiveNavLink();
     setupFaqAccordion();
     setupMissingImageFallbacks();
-    setupPrelaunchBanner();
+    setupOrderBanner();
 });
 
-function setupPrelaunchBanner() {
-    const banner = document.getElementById("prelaunchBanner");
+function setupOrderBanner() {
+    const banner = document.getElementById("orderBanner");
     const dismissButton = document.querySelector(".banner-dismiss");
 
     if (!banner || !dismissButton) {
         return;
     }
 
-    const isDismissed = localStorage.getItem("cheesieClubPreorderDismissed") === "true";
+    const isDismissed = localStorage.getItem("cheesieClubOrderBannerDismissed") === "true";
 
     if (isDismissed) {
         banner.classList.add("is-hidden");
@@ -22,7 +22,7 @@ function setupPrelaunchBanner() {
 
     dismissButton.addEventListener("click", function () {
         banner.classList.add("is-hidden");
-        localStorage.setItem("cheesieClubPreorderDismissed", "true");
+        localStorage.setItem("cheesieClubOrderBannerDismissed", "true");
     });
 }
 

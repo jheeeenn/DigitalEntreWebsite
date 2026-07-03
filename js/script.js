@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
     setupFaqAccordion();
     setupMissingImageFallbacks();
     setupOrderBanner();
+    setupOrderCart();
 });
 
 function setupOrderBanner() {
@@ -24,6 +25,364 @@ function setupOrderBanner() {
         banner.classList.add("is-hidden");
         localStorage.setItem("cheesieClubOrderBannerDismissed", "true");
     });
+}
+
+function setupOrderCart() {
+    const STORAGE_KEY = "cheesieClubOrderCartV1";
+    const INSTAGRAM_PROFILE_URL = "https://www.instagram.com/cheesie_club/";
+    const INSTAGRAM_DM_URL = "https://ig.me/m/cheesie_club";
+    const MENU_PRICES = {
+        Original: 8.90,
+        Oreo: 9.90,
+        Biscoff: 11.90,
+        Matcha: 10.90
+    };
+
+    const addButtons = document.querySelectorAll(".add-to-cart-btn");
+    const floatingButton = document.getElementById("floatingCartButton");
+    const badge = document.getElementById("cartBadge");
+    const overlay = document.getElementById("cartOverlay");
+    const drawer = document.getElementById("cartDrawer");
+    const closeButton = document.getElementById("cartClose");
+    const emptyState = document.getElementById("cartEmpty");
+    const content = document.getElementById("cartContent");
+    const itemsContainer = document.getElementById("cartItems");
+    const subtotalEl = document.getElementById("cartSubtotal");
+    const deliveryFeeEl = document.getElementById("cartDeliveryFee");
+    const totalEl = document.getElementById("cartTotal");
+    const messagePreview = document.getElementById("orderMessagePreview");
+    const copyButton = document.getElementById("copyOrderMessage");
+    const copyOpenButton = document.getElementById("copyAndOpenInstagram");
+    const clearButton = document.getElementById("clearCartButton");
+    const fulfilmentInputs = document.querySelectorAll('input[name="fulfilment"]');
+
+    if (!floatingButton || !badge || !overlay || !drawer || !closeButton || !emptyState || !content ||
+        !itemsContainer || !subtotalEl || !deliveryFeeEl || !totalEl || !messagePreview ||
+        !copyButton || !copyOpenButton || !clearButton) {
+        return;
+    }
+
+    let state = loadCart();
+    let lastFocusedElement = null;
+
+    addButtons.forEach(function (button) {
+        button.addEventListener("click", function () {
+            const name = button.dataset.name;
+            const price = Number(button.dataset.price);
+
+            if (!name || !Object.prototype.hasOwnProperty.call(MENU_PRICES, name) ||
+                Number.isNaN(price) || price !== MENU_PRICES[name]) {
+                return;
+            }
+
+            if (!state.items[name]) {
+                state.items[name] = {
+                    name: name,
+                    price: MENU_PRICES[name],
+                    qty: 0
+                };
+            }
+
+            state.items[name].qty += 1;
+            saveCart();
+            renderCart();
+            flashAddedButton(button);
+            openDrawer();
+        });
+    });
+
+    floatingButton.addEventListener("click", openDrawer);
+    closeButton.addEventListener("click", closeDrawer);
+    overlay.addEventListener("click", closeDrawer);
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && drawer.classList.contains("is-open")) {
+            closeDrawer();
+        }
+    });
+
+    fulfilmentInputs.forEach(function (input) {
+        input.addEventListener("change", function () {
+            state.fulfilment = input.value;
+            saveCart();
+            renderCart();
+        });
+    });
+
+    copyButton.addEventListener("click", async function () {
+        const copied = await copyText(generateOrderMessage());
+        showTemporaryButtonText(copyButton, copied ? "Copied!" : "Copy failed", "Copy order message");
+    });
+
+    copyOpenButton.addEventListener("click", async function () {
+        const instagramWindow = window.open(INSTAGRAM_DM_URL, "_blank", "noopener");
+        const copied = await copyText(generateOrderMessage());
+
+        if (!instagramWindow) {
+            window.open(INSTAGRAM_PROFILE_URL, "_blank", "noopener");
+        }
+
+        showTemporaryButtonText(copyOpenButton, copied ? "Copied!" : "Opened Instagram", "Copy & open Instagram");
+    });
+
+    clearButton.addEventListener("click", function () {
+        state.items = {};
+        saveCart();
+        renderCart();
+    });
+
+    itemsContainer.addEventListener("click", function (event) {
+        const button = event.target.closest("[data-cart-action]");
+
+        if (!button) {
+            return;
+        }
+
+        const name = button.dataset.name;
+        const action = button.dataset.cartAction;
+
+        if (!state.items[name]) {
+            return;
+        }
+
+        if (action === "increase") {
+            state.items[name].qty += 1;
+        }
+
+        if (action === "decrease") {
+            state.items[name].qty -= 1;
+
+            if (state.items[name].qty <= 0) {
+                delete state.items[name];
+            }
+        }
+
+        saveCart();
+        renderCart();
+    });
+
+    renderCart();
+
+    function loadCart() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+            const items = {};
+
+            if (saved && saved.items) {
+                Object.keys(saved.items).forEach(function (name) {
+                    const savedItem = saved.items[name];
+                    const qty = Math.floor(Number(savedItem.qty));
+
+                    if (Object.prototype.hasOwnProperty.call(MENU_PRICES, name) && qty > 0) {
+                        items[name] = {
+                            name: name,
+                            price: MENU_PRICES[name],
+                            qty: qty
+                        };
+                    }
+                });
+            }
+
+            return {
+                items: items,
+                fulfilment: saved && saved.fulfilment === "pickup" ? "pickup" : "delivery"
+            };
+        } catch (error) {
+            console.warn("Could not load Cheesie Club order draft", error);
+        }
+
+        return {
+            items: {},
+            fulfilment: "delivery"
+        };
+    }
+
+    function saveCart() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (error) {
+            console.warn("Could not save Cheesie Club order draft", error);
+        }
+    }
+
+    function getCartItems() {
+        return Object.values(state.items).filter(function (item) {
+            return item.qty > 0;
+        });
+    }
+
+    function getSummary() {
+        const items = getCartItems();
+        const itemCount = items.reduce(function (sum, item) {
+            return sum + item.qty;
+        }, 0);
+        const subtotal = items.reduce(function (sum, item) {
+            return sum + item.price * item.qty;
+        }, 0);
+        let deliveryFee = 0;
+
+        if (state.fulfilment === "delivery" && itemCount > 0) {
+            deliveryFee = itemCount >= 2 ? 0 : 1;
+        }
+
+        return {
+            items: items,
+            itemCount: itemCount,
+            subtotal: subtotal,
+            deliveryFee: deliveryFee,
+            total: subtotal + deliveryFee
+        };
+    }
+
+    function renderCart() {
+        const summary = getSummary();
+
+        badge.textContent = String(summary.itemCount);
+        badge.setAttribute("aria-label", summary.itemCount + (summary.itemCount === 1 ? " item" : " items"));
+
+        if (summary.itemCount === 0) {
+            badge.classList.add("is-empty");
+            emptyState.hidden = false;
+            content.hidden = true;
+        } else {
+            badge.classList.remove("is-empty");
+            emptyState.hidden = true;
+            content.hidden = false;
+        }
+
+        fulfilmentInputs.forEach(function (input) {
+            input.checked = input.value === state.fulfilment;
+        });
+
+        itemsContainer.innerHTML = summary.items.map(function (item) {
+            const safeName = escapeHtml(item.name);
+
+            return `
+                <div class="cart-item">
+                    <div>
+                        <h3>${safeName}</h3>
+                        <small>${formatRM(item.price)} each &middot; ${formatRM(item.price * item.qty)}</small>
+                    </div>
+                    <div class="cart-qty-controls">
+                        <button type="button" data-cart-action="decrease" data-name="${safeName}" aria-label="Decrease ${safeName}">&minus;</button>
+                        <span>${item.qty}</span>
+                        <button type="button" data-cart-action="increase" data-name="${safeName}" aria-label="Increase ${safeName}">+</button>
+                    </div>
+                </div>
+            `;
+        }).join("");
+
+        subtotalEl.textContent = formatRM(summary.subtotal);
+        deliveryFeeEl.textContent = state.fulfilment === "delivery" && summary.deliveryFee === 0 && summary.itemCount >= 2
+            ? "Free"
+            : formatRM(summary.deliveryFee);
+        totalEl.textContent = formatRM(summary.total);
+        messagePreview.value = generateOrderMessage();
+    }
+
+    function generateOrderMessage() {
+        const summary = getSummary();
+
+        if (summary.itemCount === 0) {
+            return "Hi Cheesie Club, I would like to order mini cheesecakes.";
+        }
+
+        const itemLines = summary.items.map(function (item) {
+            return `- ${item.name} x ${item.qty} = ${formatRM(item.price * item.qty)}`;
+        }).join("\n");
+        const arrangement = state.fulfilment === "delivery"
+            ? "Delivery within selected Kampar area"
+            : "Pickup in Kampar";
+        const deliveryLine = state.fulfilment === "delivery"
+            ? `Delivery fee: ${summary.deliveryFee === 0 ? "Free" : formatRM(summary.deliveryFee)}`
+            : "Delivery fee: RM0.00";
+
+        return `Hi Cheesie Club, I would like to order:\n${itemLines}\n\nPreferred arrangement: ${arrangement}\n${deliveryLine}\nEstimated total: ${formatRM(summary.total)}\n\nName:\nKampar area / pickup preference:\nPreferred date/time:\n\nPlease confirm availability and payment details. Thank you!`;
+    }
+
+    function openDrawer() {
+        lastFocusedElement = document.activeElement;
+        drawer.scrollTop = 0;
+        drawer.classList.add("is-open");
+        drawer.removeAttribute("inert");
+        drawer.setAttribute("aria-hidden", "false");
+        overlay.hidden = false;
+        floatingButton.setAttribute("aria-expanded", "true");
+        document.body.classList.add("cart-open");
+        closeButton.focus();
+    }
+
+    function closeDrawer() {
+        drawer.classList.remove("is-open");
+        drawer.setAttribute("inert", "");
+        drawer.setAttribute("aria-hidden", "true");
+        overlay.hidden = true;
+        floatingButton.setAttribute("aria-expanded", "false");
+        document.body.classList.remove("cart-open");
+
+        if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+            lastFocusedElement.focus();
+        }
+    }
+
+    async function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            try {
+                await navigator.clipboard.writeText(text);
+                return true;
+            } catch (error) {
+                // Fall back to the legacy copy command below.
+            }
+        }
+
+        try {
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            textarea.style.position = "fixed";
+            textarea.style.opacity = "0";
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            const copied = document.execCommand("copy");
+            textarea.remove();
+            return copied;
+        } catch (error) {
+            console.warn("Could not copy order message", error);
+            return false;
+        }
+    }
+
+    function flashAddedButton(button) {
+        const oldText = button.textContent;
+        button.classList.add("added");
+        button.textContent = "Added!";
+
+        setTimeout(function () {
+            button.classList.remove("added");
+            button.textContent = oldText;
+        }, 1200);
+    }
+
+    function showTemporaryButtonText(button, message, originalText) {
+        button.textContent = message;
+
+        setTimeout(function () {
+            button.textContent = originalText;
+        }, 1500);
+    }
+
+    function formatRM(value) {
+        return "RM" + value.toFixed(2);
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
 }
 
 function setActiveNavLink() {

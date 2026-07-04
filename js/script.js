@@ -30,7 +30,6 @@ function setupOrderBanner() {
 function setupOrderCart() {
     const STORAGE_KEY = "cheesieClubOrderCartV1";
     const INSTAGRAM_PROFILE_URL = "https://www.instagram.com/cheesie_club/";
-    const INSTAGRAM_DM_URL = "https://ig.me/m/cheesie_club";
     const NORMAL_DELIVERY_FEE = 1;
     const FREE_DELIVERY_PROMOTION_ACTIVE = true;
     const MENU_PRICES = {
@@ -118,22 +117,16 @@ function setupOrderCart() {
         showTemporaryButtonText(copyButton, copied ? "Copied!" : "Copy failed", "Copy order message");
     });
 
-    copyOpenButton.addEventListener("click", function () {
-        let copied = false;
+    copyOpenButton.addEventListener("click", async function () {
+        const copied = await copyText(generateOrderMessage());
 
-        try {
-            copied = copyTextImmediately(generateOrderMessage());
-        } catch (error) {
-            console.warn("Could not copy order message before opening Instagram", error);
-        }
+        window.open(INSTAGRAM_PROFILE_URL, "_blank", "noopener");
 
-        const instagramWindow = window.open(INSTAGRAM_DM_URL, "_blank", "noopener");
-
-        if (!instagramWindow) {
-            window.location.href = INSTAGRAM_PROFILE_URL;
-        }
-
-        showTemporaryButtonText(copyOpenButton, copied ? "Copied!" : "Opened Instagram", "Copy & open Instagram");
+        showTemporaryButtonText(
+            copyOpenButton,
+            copied ? "Copied! Opening Instagram..." : "Opening Instagram...",
+            "Copy & open Instagram"
+        );
     });
 
     clearButton.addEventListener("click", function () {

@@ -31,7 +31,7 @@ function setupOrderCart() {
     const STORAGE_KEY = "cheesieClubOrderCartV1";
     const INSTAGRAM_PROFILE_URL = "https://www.instagram.com/cheesie_club/";
     const NORMAL_DELIVERY_FEE = 1;
-    const EARLY_BIRD_PROMOTION_END = new Date("2026-07-21T00:00:00+08:00").getTime();
+    const EARLY_BIRD_PROMOTION_END = new Date("2026-07-20T00:00:00+08:00").getTime();
     const MENU_PRICES = {
         Original: 8.90,
         Oreo: 9.90,

@@ -122,6 +122,11 @@
             <div>
                 <span class="eyebrow">Your order draft</span>
                 <h2>Review your cheesecakes</h2>
+                <div class="order-step-indicator" aria-label="Order progress">
+                    <span class="order-step-dot is-active" data-step-indicator="1">1</span>
+                    <span class="order-step-line"></span>
+                    <span class="order-step-dot" data-step-indicator="2">2</span>
+                </div>
             </div>
             <button class="cart-close" id="cartClose" type="button" aria-label="Close order draft">&times;</button>
         </div>
@@ -131,50 +136,133 @@
         </div>
 
         <div class="cart-content" id="cartContent" hidden>
-            <div class="cart-items" id="cartItems"></div>
+            <div class="order-step-view" id="cartReviewStep">
+                <div class="cart-items" id="cartItems"></div>
 
-            <div class="fulfilment-box">
-                <h3>Delivery or pickup</h3>
-                <label class="fulfilment-option">
-                    <input type="radio" name="fulfilment" value="delivery" checked>
-                    <span>Delivery within selected Kampar areas</span>
+                <div class="cart-review-summary">
+                    <div>
+                        <span>Items subtotal</span>
+                        <strong id="cartSubtotal">RM0.00</strong>
+                    </div>
+                    <p>Delivery or pickup details and final charges are completed in the next step.</p>
+                </div>
+
+                <button class="button primary continue-order-button" id="continueToOrderDetails" type="button">
+                    Continue to order details
+                </button>
+
+                <button class="clear-cart-button" id="clearCartButton" type="button">Clear order draft</button>
+            </div>
+
+            <div class="order-step-view" id="orderDetailsStep" hidden>
+                <button class="order-back-button" id="backToCartReview" type="button">
+                    &larr; Back to order draft
+                </button>
+
+                <div class="order-details-heading">
+                    <span class="eyebrow">Step 2 of 2</span>
+                    <h2>Delivery or pickup details</h2>
+                    <p>Tell us your preferred arrangement. The final date and time remain subject to confirmation.</p>
+                </div>
+
+                <p class="early-bird-notice" id="earlyBirdNotice">
+                    Early-bird offer: enjoy free delivery on every order through 20 July 2026.
+                </p>
+
+                <fieldset class="order-form-group">
+                    <legend>Preferred arrangement</legend>
+
+                    <label class="fulfilment-option">
+                        <input type="radio" name="fulfilment" value="delivery" checked>
+                        <span>
+                            <strong>Delivery</strong>
+                            <small>Selected areas within Kampar only</small>
+                        </span>
+                    </label>
+
+                    <label class="fulfilment-option">
+                        <input type="radio" name="fulfilment" value="pickup">
+                        <span>
+                            <strong>Pickup</strong>
+                            <small>Available in Kampar as an alternative</small>
+                        </span>
+                    </label>
+                </fieldset>
+
+                <div class="order-form-grid">
+                    <label class="order-field">
+                        <span>Requested date</span>
+                        <input id="requestedOrderDate" type="date" required aria-describedby="requestedOrderDateError">
+                        <small class="order-field-error" id="requestedOrderDateError" aria-live="polite"></small>
+                    </label>
+
+                    <label class="order-field">
+                        <span>Requested time</span>
+                        <input id="requestedOrderTime" type="time" required aria-describedby="requestedOrderTimeError">
+                        <small class="order-field-error" id="requestedOrderTimeError" aria-live="polite"></small>
+                    </label>
+                </div>
+
+                <label class="order-field" id="deliveryAddressField">
+                    <span>Delivery address</span>
+                    <textarea
+                        id="deliveryAddress"
+                        rows="3"
+                        placeholder="Enter your delivery address within Kampar"
+                        required
+                        aria-describedby="deliveryAddressHelp deliveryAddressError"
+                    ></textarea>
+                    <small id="deliveryAddressHelp">Delivery is available only within selected Kampar areas.</small>
+                    <small class="order-field-error" id="deliveryAddressError" aria-live="polite"></small>
                 </label>
-                <label class="fulfilment-option">
-                    <input type="radio" name="fulfilment" value="pickup">
-                    <span>Pickup in Kampar as an alternative</span>
+
+                <p class="order-request-note">
+                    Your requested date and time are preferences only. Cheesie Club will confirm availability through Instagram DM.
+                </p>
+
+                <div class="cart-summary">
+                    <div>
+                        <span>Subtotal</span>
+                        <strong id="orderSubtotal">RM0.00</strong>
+                    </div>
+
+                    <div>
+                        <span>Delivery fee</span>
+                        <strong id="cartDeliveryFee">RM0.00</strong>
+                    </div>
+
+                    <div class="cart-discount-row" id="cartDiscountRow" hidden>
+                        <span id="cartDiscountLabel">Delivery discount</span>
+                        <strong id="cartDiscountAmount">-RM0.00</strong>
+                    </div>
+
+                    <div class="cart-summary-total">
+                        <span>Estimated total</span>
+                        <strong id="cartTotal">RM0.00</strong>
+                    </div>
+                </div>
+
+                <label class="message-preview-label" for="orderMessagePreview">
+                    Generated Instagram message
                 </label>
-            </div>
 
-            <div class="cart-summary">
-                <div>
-                    <span>Subtotal</span>
-                    <strong id="cartSubtotal">RM0.00</strong>
-                </div>
-                <div>
-                    <span>Delivery fee</span>
-                    <strong id="cartDeliveryFee">RM0.00</strong>
-                </div>
-                <div class="cart-promotion-row" id="cartPromotionRow" hidden>
-                    <span>Launch promotion</span>
-                    <strong id="cartPromotionDiscount">-RM0.00</strong>
-                </div>
-                <div class="cart-summary-total">
-                    <span>Estimated total</span>
-                    <strong id="cartTotal">RM0.00</strong>
+                <textarea
+                    id="orderMessagePreview"
+                    class="order-message-preview"
+                    rows="11"
+                    readonly
+                ></textarea>
+
+                <div class="cart-actions">
+                    <button class="button secondary" id="copyOrderMessage" type="button">
+                        Copy order message
+                    </button>
+
+                    <button class="button primary" id="copyAndOpenInstagram" type="button">
+                        Copy &amp; open Instagram
+                    </button>
                 </div>
             </div>
-
-            <p class="cart-note">Final availability, delivery/pickup time, and payment details will be confirmed through Instagram DM.</p>
-
-            <label class="message-preview-label" for="orderMessagePreview">Generated DM message</label>
-            <textarea id="orderMessagePreview" class="order-message-preview" rows="8" readonly></textarea>
-
-            <div class="cart-actions">
-                <button class="button secondary" id="copyOrderMessage" type="button">Copy order message</button>
-                <button class="button primary" id="copyAndOpenInstagram" type="button">Copy &amp; open Instagram</button>
-            </div>
-
-            <button class="clear-cart-button" id="clearCartButton" type="button">Clear order draft</button>
         </div>
     </aside>
 

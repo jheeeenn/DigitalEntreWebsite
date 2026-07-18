@@ -31,7 +31,7 @@ function setupOrderCart() {
     const STORAGE_KEY = "cheesieClubOrderCartV1";
     const INSTAGRAM_PROFILE_URL = "https://www.instagram.com/cheesie_club/";
     const NORMAL_DELIVERY_FEE = 1;
-    const FREE_DELIVERY_PROMOTION_ACTIVE = true;
+    const EARLY_BIRD_PROMOTION_END = new Date("2026-07-21T00:00:00+08:00").getTime();
     const MENU_PRICES = {
         Original: 8.90,
         Oreo: 9.90,
@@ -49,24 +49,46 @@ function setupOrderCart() {
     const content = document.getElementById("cartContent");
     const itemsContainer = document.getElementById("cartItems");
     const subtotalEl = document.getElementById("cartSubtotal");
+    const orderSubtotalEl = document.getElementById("orderSubtotal");
     const deliveryFeeEl = document.getElementById("cartDeliveryFee");
-    const promotionRow = document.getElementById("cartPromotionRow");
-    const promotionDiscountEl = document.getElementById("cartPromotionDiscount");
+    const discountRow = document.getElementById("cartDiscountRow");
+    const discountLabelEl = document.getElementById("cartDiscountLabel");
+    const discountAmountEl = document.getElementById("cartDiscountAmount");
     const totalEl = document.getElementById("cartTotal");
     const messagePreview = document.getElementById("orderMessagePreview");
     const copyButton = document.getElementById("copyOrderMessage");
     const copyOpenButton = document.getElementById("copyAndOpenInstagram");
     const clearButton = document.getElementById("clearCartButton");
     const fulfilmentInputs = document.querySelectorAll('input[name="fulfilment"]');
+    const cartReviewStep = document.getElementById("cartReviewStep");
+    const orderDetailsStep = document.getElementById("orderDetailsStep");
+    const continueButton = document.getElementById("continueToOrderDetails");
+    const backButton = document.getElementById("backToCartReview");
+    const stepIndicators = document.querySelectorAll("[data-step-indicator]");
+    const requestedOrderDate = document.getElementById("requestedOrderDate");
+    const requestedOrderTime = document.getElementById("requestedOrderTime");
+    const deliveryAddressField = document.getElementById("deliveryAddressField");
+    const deliveryAddress = document.getElementById("deliveryAddress");
+    const earlyBirdNotice = document.getElementById("earlyBirdNotice");
+    const dateError = document.getElementById("requestedOrderDateError");
+    const timeError = document.getElementById("requestedOrderTimeError");
+    const addressError = document.getElementById("deliveryAddressError");
 
     if (!floatingButton || !badge || !overlay || !drawer || !closeButton || !emptyState || !content ||
-        !itemsContainer || !subtotalEl || !deliveryFeeEl || !promotionRow || !promotionDiscountEl ||
-        !totalEl || !messagePreview || !copyButton || !copyOpenButton || !clearButton) {
+        !itemsContainer || !subtotalEl || !orderSubtotalEl || !deliveryFeeEl || !discountRow ||
+        !discountLabelEl || !discountAmountEl || !totalEl || !messagePreview || !copyButton ||
+        !copyOpenButton || !clearButton || !cartReviewStep || !orderDetailsStep || !continueButton ||
+        !backButton || !requestedOrderDate || !requestedOrderTime || !deliveryAddressField ||
+        !deliveryAddress || !earlyBirdNotice || !dateError || !timeError || !addressError) {
         return;
     }
 
     let state = loadCart();
     let lastFocusedElement = null;
+
+    requestedOrderDate.min = getCurrentMalaysiaDate();
+    updateDeliveryAddressField();
+    schedulePromotionExpiryUpdate();
 
     addButtons.forEach(function (button) {
         button.addEventListener("click", function () {
@@ -97,6 +119,8 @@ function setupOrderCart() {
     floatingButton.addEventListener("click", openDrawer);
     closeButton.addEventListener("click", closeDrawer);
     overlay.addEventListener("click", closeDrawer);
+    continueButton.addEventListener("click", showOrderDetailsStep);
+    backButton.addEventListener("click", showCartReviewStep);
 
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape" && drawer.classList.contains("is-open")) {
@@ -107,17 +131,32 @@ function setupOrderCart() {
     fulfilmentInputs.forEach(function (input) {
         input.addEventListener("change", function () {
             state.fulfilment = input.value;
-            saveCart();
+            updateDeliveryAddressField();
             renderCart();
         });
     });
 
+    [requestedOrderDate, requestedOrderTime, deliveryAddress].forEach(function (field) {
+        field.addEventListener("input", function () {
+            clearFieldError(field);
+            messagePreview.value = generateOrderMessage();
+        });
+    });
+
     copyButton.addEventListener("click", async function () {
+        if (!validateOrderDetails()) {
+            return;
+        }
+
         const copied = await copyText(generateOrderMessage());
         showTemporaryButtonText(copyButton, copied ? "Copied!" : "Copy failed", "Copy order message");
     });
 
     copyOpenButton.addEventListener("click", async function () {
+        if (!validateOrderDetails()) {
+            return;
+        }
+
         const copied = await copyText(generateOrderMessage());
 
         window.open(INSTAGRAM_PROFILE_URL, "_blank", "noopener");
@@ -189,7 +228,7 @@ function setupOrderCart() {
 
             return {
                 items: items,
-                fulfilment: saved && saved.fulfilment === "pickup" ? "pickup" : "delivery"
+                fulfilment: "delivery"
             };
         } catch (error) {
             console.warn("Could not load Cheesie Club order draft", error);
@@ -203,7 +242,7 @@ function setupOrderCart() {
 
     function saveCart() {
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ items: state.items }));
         } catch (error) {
             console.warn("Could not save Cheesie Club order draft", error);
         }
@@ -224,28 +263,36 @@ function setupOrderCart() {
             return sum + item.price * item.qty;
         }, 0);
         let deliveryFee = 0;
-        let promotionDiscount = 0;
+        let deliveryDiscount = 0;
+        let discountLabel = "";
 
         if (state.fulfilment === "delivery" && itemCount > 0) {
             deliveryFee = NORMAL_DELIVERY_FEE;
 
-            if (FREE_DELIVERY_PROMOTION_ACTIVE) {
-                promotionDiscount = deliveryFee;
+            if (isEarlyBirdPromotionActive()) {
+                deliveryDiscount = NORMAL_DELIVERY_FEE;
+                discountLabel = "Early-bird free delivery";
             } else if (itemCount >= 2) {
-                promotionDiscount = deliveryFee;
+                deliveryDiscount = NORMAL_DELIVERY_FEE;
+                discountLabel = "Free delivery (2+ cakes)";
             }
         }
 
-        const total = Math.max(0, subtotal + deliveryFee - promotionDiscount);
+        const total = Math.max(0, subtotal + deliveryFee - deliveryDiscount);
 
         return {
             items: items,
             itemCount: itemCount,
             subtotal: subtotal,
             deliveryFee: deliveryFee,
-            promotionDiscount: promotionDiscount,
+            deliveryDiscount: deliveryDiscount,
+            discountLabel: discountLabel,
             total: total
         };
+    }
+
+    function isEarlyBirdPromotionActive() {
+        return Date.now() < EARLY_BIRD_PROMOTION_END;
     }
 
     function renderCart() {
@@ -258,6 +305,7 @@ function setupOrderCart() {
             badge.classList.add("is-empty");
             emptyState.hidden = false;
             content.hidden = true;
+            showCartReviewStep();
         } else {
             badge.classList.remove("is-empty");
             emptyState.hidden = true;
@@ -287,17 +335,21 @@ function setupOrderCart() {
         }).join("");
 
         subtotalEl.textContent = formatRM(summary.subtotal);
+        orderSubtotalEl.textContent = formatRM(summary.subtotal);
         deliveryFeeEl.textContent = formatRM(summary.deliveryFee);
 
-        if (summary.promotionDiscount > 0) {
-            promotionRow.hidden = false;
-            promotionDiscountEl.textContent = "-" + formatRM(summary.promotionDiscount);
+        if (summary.deliveryDiscount > 0) {
+            discountRow.hidden = false;
+            discountLabelEl.textContent = summary.discountLabel;
+            discountAmountEl.textContent = "-" + formatRM(summary.deliveryDiscount);
         } else {
-            promotionRow.hidden = true;
-            promotionDiscountEl.textContent = "-RM0.00";
+            discountRow.hidden = true;
+            discountLabelEl.textContent = "Delivery discount";
+            discountAmountEl.textContent = "-RM0.00";
         }
 
         totalEl.textContent = formatRM(summary.total);
+        earlyBirdNotice.hidden = !isEarlyBirdPromotionActive();
         messagePreview.value = generateOrderMessage();
     }
 
@@ -314,16 +366,40 @@ function setupOrderCart() {
         const arrangement = state.fulfilment === "delivery"
             ? "Delivery within selected Kampar area"
             : "Pickup in Kampar";
-        const feeLines = state.fulfilment === "delivery"
-            ? `Delivery fee: ${formatRM(summary.deliveryFee)}\nLaunch promotion: -${formatRM(summary.promotionDiscount)}`
-            : "Delivery fee: RM0.00";
+        const arrangementType = state.fulfilment === "delivery" ? "delivery" : "pickup";
+        const requestedDate = formatRequestedDate(requestedOrderDate.value);
+        const requestedTime = formatRequestedTime(requestedOrderTime.value);
+        const detailLines = [
+            `Preferred arrangement: ${arrangement}`,
+            `Requested ${arrangementType} date: ${requestedDate}`,
+            `Requested ${arrangementType} time: ${requestedTime}`
+        ];
 
-        return `Hi Cheesie Club, I would like to order:\n${itemLines}\n\nPreferred arrangement: ${arrangement}\n${feeLines}\nEstimated total: ${formatRM(summary.total)}\n\nPlease confirm availability and payment details. Thank you!`;
+        if (state.fulfilment === "delivery") {
+            detailLines.push(`Delivery address: ${deliveryAddress.value.trim()}`);
+        }
+
+        const priceLines = [
+            `Subtotal: ${formatRM(summary.subtotal)}`,
+            `Delivery fee: ${formatRM(summary.deliveryFee)}`
+        ];
+
+        if (summary.deliveryDiscount > 0) {
+            priceLines.push(`${summary.discountLabel}: -${formatRM(summary.deliveryDiscount)}`);
+        }
+
+        priceLines.push(`Estimated total: ${formatRM(summary.total)}`);
+
+        const confirmationDetails = state.fulfilment === "delivery"
+            ? "delivery area and payment details"
+            : "pickup details and payment details";
+
+        return `Hi Cheesie Club, I would like to order:\n${itemLines}\n\n${detailLines.join("\n")}\n\n${priceLines.join("\n")}\n\nPlease confirm availability, date/time, ${confirmationDetails}. Thank you!`;
     }
 
     function openDrawer() {
         lastFocusedElement = document.activeElement;
-        drawer.scrollTop = 0;
+        showCartReviewStep();
         drawer.classList.add("is-open");
         drawer.removeAttribute("inert");
         drawer.setAttribute("aria-hidden", "false");
@@ -343,6 +419,168 @@ function setupOrderCart() {
 
         if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
             lastFocusedElement.focus();
+        }
+    }
+
+    function showCartReviewStep() {
+        cartReviewStep.hidden = false;
+        orderDetailsStep.hidden = true;
+        updateOrderStepIndicator(1);
+        drawer.scrollTop = 0;
+    }
+
+    function showOrderDetailsStep() {
+        if (getSummary().itemCount === 0) {
+            return;
+        }
+
+        requestedOrderDate.min = getCurrentMalaysiaDate();
+        cartReviewStep.hidden = true;
+        orderDetailsStep.hidden = false;
+        updateOrderStepIndicator(2);
+        drawer.scrollTop = 0;
+        backButton.focus();
+    }
+
+    function updateOrderStepIndicator(activeStep) {
+        stepIndicators.forEach(function (indicator) {
+            indicator.classList.toggle(
+                "is-active",
+                Number(indicator.dataset.stepIndicator) === activeStep
+            );
+        });
+    }
+
+    function updateDeliveryAddressField() {
+        const isDelivery = state.fulfilment === "delivery";
+
+        deliveryAddressField.hidden = !isDelivery;
+        deliveryAddress.disabled = !isDelivery;
+        deliveryAddress.required = isDelivery;
+
+        if (!isDelivery) {
+            clearFieldError(deliveryAddress);
+        }
+    }
+
+    function validateOrderDetails() {
+        requestedOrderDate.min = getCurrentMalaysiaDate();
+        const requiredFields = [requestedOrderDate, requestedOrderTime];
+
+        if (state.fulfilment === "delivery") {
+            requiredFields.push(deliveryAddress);
+        }
+
+        [requestedOrderDate, requestedOrderTime, deliveryAddress].forEach(clearFieldError);
+
+        requiredFields.forEach(function (field) {
+            if (!field.value.trim()) {
+                const label = field === requestedOrderDate
+                    ? "Please choose a requested date."
+                    : field === requestedOrderTime
+                        ? "Please choose a requested time."
+                        : "Please enter a delivery address within Kampar.";
+                setFieldError(field, label);
+            } else if (field === requestedOrderDate && field.value < requestedOrderDate.min) {
+                setFieldError(field, "Please choose today or a future date.");
+            }
+        });
+
+        const firstInvalidField = requiredFields.find(function (field) {
+            return field.getAttribute("aria-invalid") === "true";
+        });
+
+        if (firstInvalidField) {
+            firstInvalidField.focus();
+            return false;
+        }
+
+        return true;
+    }
+
+    function setFieldError(field, message) {
+        const errorElement = getFieldErrorElement(field);
+        field.setAttribute("aria-invalid", "true");
+        field.closest(".order-field").classList.add("has-error");
+        errorElement.textContent = message;
+    }
+
+    function clearFieldError(field) {
+        const errorElement = getFieldErrorElement(field);
+        field.removeAttribute("aria-invalid");
+        field.closest(".order-field").classList.remove("has-error");
+        errorElement.textContent = "";
+    }
+
+    function getFieldErrorElement(field) {
+        if (field === requestedOrderDate) {
+            return dateError;
+        }
+
+        if (field === requestedOrderTime) {
+            return timeError;
+        }
+
+        return addressError;
+    }
+
+    function getCurrentMalaysiaDate() {
+        const parts = new Intl.DateTimeFormat("en-CA", {
+            timeZone: "Asia/Kuala_Lumpur",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit"
+        }).formatToParts(new Date());
+        const dateParts = {};
+
+        parts.forEach(function (part) {
+            dateParts[part.type] = part.value;
+        });
+
+        return `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+    }
+
+    function formatRequestedDate(value) {
+        if (!value) {
+            return "Not provided";
+        }
+
+        const dateParts = value.split("-").map(Number);
+        const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+
+        return new Intl.DateTimeFormat("en-MY", {
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+        }).format(date);
+    }
+
+    function formatRequestedTime(value) {
+        if (!value) {
+            return "Not provided";
+        }
+
+        const timeParts = value.split(":").map(Number);
+        const date = new Date(2000, 0, 1, timeParts[0], timeParts[1]);
+
+        return new Intl.DateTimeFormat("en-MY", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true
+        }).format(date).toUpperCase();
+    }
+
+    function schedulePromotionExpiryUpdate() {
+        const timeUntilExpiry = EARLY_BIRD_PROMOTION_END - Date.now();
+
+        if (timeUntilExpiry > 0) {
+            window.setTimeout(function () {
+                if (isEarlyBirdPromotionActive()) {
+                    schedulePromotionExpiryUpdate();
+                } else {
+                    renderCart();
+                }
+            }, Math.min(timeUntilExpiry + 50, 2147483647));
         }
     }
 

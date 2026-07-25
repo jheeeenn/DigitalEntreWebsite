@@ -1324,6 +1324,90 @@ body.cart-open {
     transform: translateY(-2px);
 }
 
+.website-maintainer-section {
+    padding-top: 2.5rem;
+}
+
+.maintainer-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.maintainer-card {
+    background: rgba(255, 250, 243, 0.82);
+    border: 1px solid rgba(75, 63, 53, 0.08);
+    border-radius: var(--radius);
+    box-shadow: 0 14px 34px rgba(75, 63, 53, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 1.4rem;
+}
+
+.maintainer-contact-card {
+    background: rgba(143, 150, 125, 0.12);
+}
+
+.maintainer-card h3 {
+    font-family: var(--font-heading);
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    letter-spacing: -0.025em;
+}
+
+.maintainer-label {
+    color: var(--sage);
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.maintainer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin-top: 0.35rem;
+}
+
+.maintainer-email a {
+    color: var(--brown);
+    font-weight: 800;
+    overflow-wrap: anywhere;
+    text-decoration: underline;
+}
+
+.website-period {
+    color: var(--caramel);
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+.website-project-note {
+    background: rgba(200, 159, 114, 0.14);
+    border-radius: 14px;
+    color: var(--brown);
+    font-size: 0.9rem;
+    font-weight: 800;
+    margin-top: auto;
+    padding: 0.75rem;
+}
+
+.maintainer-order-note {
+    background: rgba(255, 250, 243, 0.78);
+    border: 1px solid rgba(75, 63, 53, 0.08);
+    border-radius: 18px;
+    margin-top: 1rem;
+    padding: 1rem;
+}
+
+.maintainer-order-note a {
+    color: var(--sage);
+    font-weight: 900;
+    text-decoration: underline;
+}
+
 .site-footer {
     border-top: 1px solid rgba(75, 63, 53, 0.08);
     color: var(--muted-gray);
@@ -1345,6 +1429,16 @@ body.cart-open {
     font-weight: 700;
 }
 
+.site-maintainer-note {
+    color: var(--muted-gray);
+    font-size: 0.78rem;
+    margin-top: 0.45rem;
+}
+
+.site-maintainer-note a {
+    font-weight: 800;
+}
+
 @media (max-width: 980px) {
     .hero,
     .split-section,
@@ -1363,6 +1457,19 @@ body.cart-open {
 }
 
 @media (max-width: 720px) {
+    .maintainer-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .maintainer-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .maintainer-actions .button {
+        width: 100%;
+    }
+
     .order-banner {
         padding:
             0.85rem

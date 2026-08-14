@@ -252,6 +252,10 @@ h3 {
     color: var(--brown);
 }
 
+.order-status-note p {
+    margin-top: 0.4rem;
+}
+
 .hero,
 .page-hero,
 .section {
@@ -565,6 +569,16 @@ h3 {
     background: var(--sage);
 }
 
+.add-to-cart-btn:disabled {
+    background: rgba(75, 63, 53, 0.18);
+    color: rgba(75, 63, 53, 0.72);
+    cursor: not-allowed;
+}
+
+.add-to-cart-btn:disabled:hover {
+    background: rgba(75, 63, 53, 0.18);
+}
+
 .menu-cta {
     align-items: center;
     background: rgba(255, 250, 243, 0.78);
@@ -640,6 +654,10 @@ body.cart-open {
 
 .floating-cart-button.cart-bounce {
     animation: cartBounce 620ms ease;
+}
+
+.floating-cart-button[hidden] {
+    display: none;
 }
 
 @keyframes cartBounce {

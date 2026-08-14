@@ -48,6 +48,11 @@
                 <p>Add any flavour below. Your draft stays on this device until you clear it.</p>
                 <p class="image-note">Images shown are for display and promotion only. Actual products may vary slightly.</p>
             </div>
+            <div class="order-status-note" id="menuAvailabilityNotice" role="status" aria-live="polite">
+                <strong id="menuAvailabilityTitle">Ordering Availability</strong>
+                <p id="menuAvailabilityText">Original, Oreo, Matcha and Biscoff are available for regular orders through 15 November 2026, subject to batch-slot confirmation.</p>
+                <p id="menuAvailabilityDetails">The final date and time, plus delivery or pickup arrangements, will be confirmed through Instagram DM.</p>
+            </div>
             <div class="menu-grid menu-order-grid">
                 <article class="flavour-card featured-menu-card">
                     <img src="assets/original.png" alt="Promotional display image for Original mini cheesecake flavour">
@@ -118,7 +123,7 @@
         <p class="site-maintainer-note">
             Website maintained by
             <a href="contact.html#website-maintainer">JHeen</a>
-            · Expected active period: June&ndash;December 2026
+            · Regular order-taking through 15 November 2026
         </p>
     </footer>
 
@@ -205,7 +210,7 @@
                 <div class="order-form-grid">
                     <label class="order-field">
                         <span>Requested date</span>
-                        <input id="requestedOrderDate" type="date" required aria-describedby="requestedOrderDateError">
+                        <input id="requestedOrderDate" type="date" max="2026-11-15" required aria-describedby="requestedOrderDateError">
                         <small class="order-field-error" id="requestedOrderDateError" aria-live="polite"></small>
                     </label>
 

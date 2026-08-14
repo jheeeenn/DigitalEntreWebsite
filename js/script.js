@@ -1,10 +1,137 @@
+const ORDERING_END_DATE = "2026-11-15";
+const MALAYSIA_TIME_ZONE = "Asia/Kuala_Lumpur";
+const ORDER_CART_STORAGE_KEY = "cheesieClubOrderCartV1";
+
 document.addEventListener("DOMContentLoaded", function () {
     setActiveNavLink();
     setupFaqAccordion();
     setupMissingImageFallbacks();
+    setupOrderingAvailability();
     setupOrderBanner();
     setupOrderCart();
 });
+
+function setupOrderingAvailability() {
+    applyOrderingAvailability();
+    scheduleOrderingAvailabilityUpdate();
+}
+
+function scheduleOrderingAvailabilityUpdate() {
+    const orderingClosesAt = new Date(`${ORDERING_END_DATE}T23:59:59.999+08:00`).getTime() + 1;
+    const timeUntilClosure = orderingClosesAt - Date.now();
+
+    if (timeUntilClosure > 0) {
+        window.setTimeout(function () {
+            if (isOrderingActive()) {
+                scheduleOrderingAvailabilityUpdate();
+            } else {
+                applyOrderingAvailability();
+                document.dispatchEvent(new CustomEvent("cheesieclub:ordering-closed"));
+            }
+        }, Math.min(timeUntilClosure + 50, 2147483647));
+    }
+}
+
+function applyOrderingAvailability() {
+    const orderingActive = isOrderingActive();
+    const banner = document.getElementById("orderBanner");
+    const bannerEyebrow = document.getElementById("orderBannerEyebrow");
+    const bannerTitle = document.getElementById("orderBannerTitle");
+    const bannerText = document.getElementById("orderBannerText");
+    const bannerPrimaryAction = document.getElementById("orderBannerPrimaryAction");
+    const heroOrderAction = document.getElementById("heroOrderAction");
+    const menuAvailabilityTitle = document.getElementById("menuAvailabilityTitle");
+    const menuAvailabilityText = document.getElementById("menuAvailabilityText");
+    const menuAvailabilityDetails = document.getElementById("menuAvailabilityDetails");
+    const contactOrderStatusTitle = document.getElementById("contactOrderStatusTitle");
+    const contactOrderStatusText = document.getElementById("contactOrderStatusText");
+    const contactOrderText = document.getElementById("contactOrderText");
+    const contactInstagramAction = document.getElementById("contactInstagramAction");
+
+    document.querySelectorAll(".nav-cta").forEach(function (link) {
+        link.textContent = orderingActive ? "Order Now" : "View Menu";
+    });
+
+    if (banner && bannerEyebrow && bannerTitle && bannerText && bannerPrimaryAction) {
+        banner.dataset.orderingActive = String(orderingActive);
+
+        if (orderingActive) {
+            bannerEyebrow.textContent = "Now taking orders";
+            bannerTitle.textContent = "Regular ordering available through 15 November 2026";
+            bannerText.textContent = "All four Cheesie Club mini cheesecake flavours are available for order, subject to batch-slot confirmation. Choose your flavours from the menu and send your prepared order through Instagram DM.";
+            bannerPrimaryAction.textContent = "Order from Menu";
+        } else {
+            banner.classList.remove("is-hidden");
+            bannerEyebrow.textContent = "Regular ordering period has ended";
+            bannerTitle.textContent = "Thank you for supporting Cheesie Club";
+            bannerText.textContent = "Our menu and product information remain available for viewing.";
+            bannerPrimaryAction.textContent = "View Menu";
+        }
+    }
+
+    if (heroOrderAction) {
+        heroOrderAction.hidden = !orderingActive;
+    }
+
+    if (menuAvailabilityTitle && menuAvailabilityText && menuAvailabilityDetails) {
+        if (orderingActive) {
+            menuAvailabilityTitle.textContent = "Ordering Availability";
+            menuAvailabilityText.textContent = "Original, Oreo, Matcha and Biscoff are available for regular orders through 15 November 2026, subject to batch-slot confirmation.";
+            menuAvailabilityDetails.textContent = "The final date and time, plus delivery or pickup arrangements, will be confirmed through Instagram DM.";
+        } else {
+            menuAvailabilityTitle.textContent = "Regular ordering period ended on 15 November 2026";
+            menuAvailabilityText.textContent = "Thank you for supporting Cheesie Club. Product information remains available for reference.";
+            menuAvailabilityDetails.textContent = "New order drafts are no longer available through this website.";
+        }
+    }
+
+    if (contactOrderStatusTitle && contactOrderStatusText && contactOrderText && contactInstagramAction) {
+        if (orderingActive) {
+            contactOrderStatusTitle.textContent = "Orders are open:";
+            contactOrderStatusText.textContent = "Send us an Instagram DM with your flavour and quantity, and we’ll confirm the available batch slot with you.";
+            contactOrderText.textContent = "Ready to order? Send us a DM with your flavour and quantity. We'll reply with the available batch slots.";
+            contactInstagramAction.lastChild.textContent = " Order by Instagram DM";
+        } else {
+            contactOrderStatusTitle.textContent = "Regular ordering has ended:";
+            contactOrderStatusText.textContent = "Cheesie Club’s menu and business information remain available for reference.";
+            contactOrderText.textContent = "Thank you for supporting Cheesie Club. You can still visit our Instagram profile for business updates.";
+            contactInstagramAction.lastChild.textContent = " Visit Cheesie Club Instagram";
+        }
+    }
+
+    document.querySelectorAll(".add-to-cart-btn").forEach(function (button) {
+        button.disabled = !orderingActive;
+        button.textContent = orderingActive ? "Add to order" : "Ordering ended";
+    });
+
+    const floatingButton = document.getElementById("floatingCartButton");
+
+    if (floatingButton) {
+        floatingButton.hidden = !orderingActive;
+        floatingButton.disabled = !orderingActive;
+        floatingButton.setAttribute("aria-hidden", String(!orderingActive));
+    }
+}
+
+function isOrderingActive(date) {
+    return getMalaysiaDate(date || new Date()) <= ORDERING_END_DATE;
+}
+
+function getMalaysiaDate(date) {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: MALAYSIA_TIME_ZONE,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+    }).formatToParts(date);
+    const dateParts = {};
+
+    parts.forEach(function (part) {
+        dateParts[part.type] = part.value;
+    });
+
+    return `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+}
 
 function setupOrderBanner() {
     const banner = document.getElementById("orderBanner");
@@ -16,7 +143,7 @@ function setupOrderBanner() {
 
     const isDismissed = localStorage.getItem("cheesieClubOrderBannerDismissed") === "true";
 
-    if (isDismissed) {
+    if (isDismissed && isOrderingActive()) {
         banner.classList.add("is-hidden");
         return;
     }
@@ -28,7 +155,6 @@ function setupOrderBanner() {
 }
 
 function setupOrderCart() {
-    const STORAGE_KEY = "cheesieClubOrderCartV1";
     const INSTAGRAM_PROFILE_URL = "https://www.instagram.com/cheesie_club/";
     const NORMAL_DELIVERY_FEE = 1;
     const EARLY_BIRD_PROMOTION_END = new Date("2026-07-20T00:00:00+08:00").getTime();
@@ -86,12 +212,17 @@ function setupOrderCart() {
     let state = loadCart();
     let lastFocusedElement = null;
 
-    requestedOrderDate.min = getCurrentMalaysiaDate();
+    setRequestedOrderDateBounds();
     updateDeliveryAddressField();
     schedulePromotionExpiryUpdate();
 
     addButtons.forEach(function (button) {
         button.addEventListener("click", function () {
+            if (!isOrderingActive()) {
+                enforceClosedOrderingState();
+                return;
+            }
+
             const name = button.dataset.name;
             const price = Number(button.dataset.price);
 
@@ -144,6 +275,11 @@ function setupOrderCart() {
     });
 
     copyButton.addEventListener("click", async function () {
+        if (!isOrderingActive()) {
+            enforceClosedOrderingState();
+            return;
+        }
+
         if (!validateOrderDetails()) {
             return;
         }
@@ -153,6 +289,11 @@ function setupOrderCart() {
     });
 
     copyOpenButton.addEventListener("click", async function () {
+        if (!isOrderingActive()) {
+            enforceClosedOrderingState();
+            return;
+        }
+
         if (!validateOrderDetails()) {
             return;
         }
@@ -181,6 +322,11 @@ function setupOrderCart() {
             return;
         }
 
+        if (!isOrderingActive()) {
+            enforceClosedOrderingState();
+            return;
+        }
+
         const name = button.dataset.name;
         const action = button.dataset.cartAction;
 
@@ -204,11 +350,21 @@ function setupOrderCart() {
         renderCart();
     });
 
+    document.addEventListener("cheesieclub:ordering-closed", enforceClosedOrderingState);
+
     renderCart();
 
     function loadCart() {
+        if (!isOrderingActive()) {
+            localStorage.removeItem(ORDER_CART_STORAGE_KEY);
+            return {
+                items: {},
+                fulfilment: "delivery"
+            };
+        }
+
         try {
-            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+            const saved = JSON.parse(localStorage.getItem(ORDER_CART_STORAGE_KEY));
             const items = {};
 
             if (saved && saved.items) {
@@ -242,7 +398,12 @@ function setupOrderCart() {
 
     function saveCart() {
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({ items: state.items }));
+            if (!isOrderingActive()) {
+                localStorage.removeItem(ORDER_CART_STORAGE_KEY);
+                return;
+            }
+
+            localStorage.setItem(ORDER_CART_STORAGE_KEY, JSON.stringify({ items: state.items }));
         } catch (error) {
             console.warn("Could not save Cheesie Club order draft", error);
         }
@@ -354,6 +515,10 @@ function setupOrderCart() {
     }
 
     function generateOrderMessage() {
+        if (!isOrderingActive()) {
+            return "Regular ordering ended on 15 November 2026.";
+        }
+
         const summary = getSummary();
 
         if (summary.itemCount === 0) {
@@ -398,6 +563,11 @@ function setupOrderCart() {
     }
 
     function openDrawer() {
+        if (!isOrderingActive()) {
+            enforceClosedOrderingState();
+            return;
+        }
+
         lastFocusedElement = document.activeElement;
         showCartReviewStep();
         drawer.classList.add("is-open");
@@ -430,11 +600,16 @@ function setupOrderCart() {
     }
 
     function showOrderDetailsStep() {
+        if (!isOrderingActive()) {
+            enforceClosedOrderingState();
+            return;
+        }
+
         if (getSummary().itemCount === 0) {
             return;
         }
 
-        requestedOrderDate.min = getCurrentMalaysiaDate();
+        setRequestedOrderDateBounds();
         cartReviewStep.hidden = true;
         orderDetailsStep.hidden = false;
         updateOrderStepIndicator(2);
@@ -464,7 +639,12 @@ function setupOrderCart() {
     }
 
     function validateOrderDetails() {
-        requestedOrderDate.min = getCurrentMalaysiaDate();
+        if (!isOrderingActive()) {
+            enforceClosedOrderingState();
+            return false;
+        }
+
+        setRequestedOrderDateBounds();
         const requiredFields = [requestedOrderDate, requestedOrderTime];
 
         if (state.fulfilment === "delivery") {
@@ -483,6 +663,8 @@ function setupOrderCart() {
                 setFieldError(field, label);
             } else if (field === requestedOrderDate && field.value < requestedOrderDate.min) {
                 setFieldError(field, "Please choose today or a future date.");
+            } else if (field === requestedOrderDate && field.value > ORDERING_END_DATE) {
+                setFieldError(field, "Regular ordering is available only through 15 November 2026.");
             }
         });
 
@@ -525,19 +707,20 @@ function setupOrderCart() {
     }
 
     function getCurrentMalaysiaDate() {
-        const parts = new Intl.DateTimeFormat("en-CA", {
-            timeZone: "Asia/Kuala_Lumpur",
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit"
-        }).formatToParts(new Date());
-        const dateParts = {};
+        return getMalaysiaDate(new Date());
+    }
 
-        parts.forEach(function (part) {
-            dateParts[part.type] = part.value;
-        });
+    function setRequestedOrderDateBounds() {
+        requestedOrderDate.min = getCurrentMalaysiaDate();
+        requestedOrderDate.max = ORDERING_END_DATE;
+    }
 
-        return `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+    function enforceClosedOrderingState() {
+        state.items = {};
+        localStorage.removeItem(ORDER_CART_STORAGE_KEY);
+        closeDrawer();
+        applyOrderingAvailability();
+        renderCart();
     }
 
     function formatRequestedDate(value) {
@@ -622,7 +805,7 @@ function setupOrderCart() {
 
         setTimeout(function () {
             button.classList.remove("added");
-            button.textContent = oldText;
+            button.textContent = isOrderingActive() ? oldText : "Ordering ended";
         }, 1200);
     }
 
